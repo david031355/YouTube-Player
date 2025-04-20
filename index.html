@@ -5,7 +5,92 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>YouTube Player שלי</title>
     <style>
-        /* ... שאר הסטיילים הקיימים ... */
+        body {
+            font-family: Arial, sans-serif;
+            margin: 20px;
+            background-color: #f0f0f0;
+            color: #333;
+        }
+        #search-container {
+            margin-bottom: 30px;
+            display: flex;
+            gap: 10px;
+            align-items: center;
+        }
+        #search-input {
+            padding: 12px;
+            width: 400px;
+            border: 1px solid #ccc;
+            border-radius: 8px;
+            font-size: 16px;
+        }
+        #search-button {
+            padding: 12px 24px;
+            background-color: #d32f2f;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 16px;
+            transition: background-color 0.3s ease;
+        }
+        #search-button:hover {
+            background-color: #b71c1c;
+        }
+        #results-container {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
+            gap: 25px;
+        }
+        .video-item {
+            background-color: white;
+            border: 1px solid #ddd;
+            padding: 15px;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+        .video-thumbnail {
+            width: 100%;
+            height: auto;
+            border-radius: 8px;
+            margin-bottom: 10px;
+        }
+        .video-title {
+            margin-top: 0;
+            font-size: 18px;
+            font-weight: bold;
+            text-align: center;
+            margin-bottom: 8px;
+        }
+        .play-button {
+            padding: 10px 20px;
+            background-color: #007bff;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 16px;
+            transition: background-color 0.3s ease;
+        }
+        .play-button:hover {
+            background-color: #0056b3;
+        }
+        iframe {
+            width: 100%;
+            aspect-ratio: 16 / 9;
+            border: none;
+            border-radius: 8px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
+        }
+        #loading-message, #no-results-message, #error-message {
+            text-align: center;
+            font-size: 18px;
+            margin-top: 20px;
+            color: #777;
+        }
         .download-button {
             display: inline-block;
             padding: 8px 16px;
@@ -17,7 +102,7 @@
             margin-top: 8px;
             cursor: pointer;
             transition: background-color 0.3s ease;
-            text-decoration: none; /* אם השתמשת בעבר ב-<a> */
+            text-decoration: none;
         }
         .download-button:hover {
             background-color: #45a049;
@@ -65,7 +150,7 @@
             noResultsMessage.style.display = 'none';
             errorMessage.style.display = 'none';
 
-            const apiUrl = `https://www.googleapis.com/youtube/v3/search?part=snippet&maxResults=50&q=${searchTerm}&type=video&key=${apiKey}`;
+            const apiUrl = `https://www.googleapis.com/youtube/v3/search?part=snippet&maxResults=50&q=<span class="math-inline">\{searchTerm\}&type\=video&key\=</span>{apiKey}`;
 
             try {
                 const response = await fetch(apiUrl);
@@ -84,48 +169,3 @@
             if (results.length === 0) {
                 noResultsMessage.style.display = 'block';
                 return;
-            }
-
-            results.forEach(item => {
-                const videoId = item.id.videoId;
-                const title = item.snippet.title;
-                const thumbnailUrl = `https://i.ytimg.com/vi/${videoId}/maxresdefault.jpg`;
-
-                const videoDiv = document.createElement('div');
-                videoDiv.classList.add('video-item');
-                videoDiv.innerHTML = `
-                    <img src="${thumbnailUrl}" alt="${title}" class="video-thumbnail">
-                    <h3 class="video-title">${title}</h3>
-                    <button class="play-button" onclick="playVideo('${videoId}')">צפה</button>
-                `;
-
-                // הוספת כפתור הורדה עם לוגיקה JavaScript
-                const downloadButton = document.createElement('button');
-                downloadButton.textContent = 'הורד תמונה';
-                downloadButton.classList.add('download-button');
-                downloadButton.addEventListener('click', () => {
-                    fetch(thumbnailUrl)
-                        .then(response => response.blob())
-                        .then(blob => {
-                            const url = window.URL.createObjectURL(blob);
-                            const a = document.createElement('a');
-                            a.href = url;
-                            a.download = `${title.replace(/[^a-z0-9]/gi, '_')}.jpg`;
-                            document.body.appendChild(a);
-                            a.click();
-                            document.body.removeChild(a);
-                            window.URL.revokeObjectURL(url);
-                        });
-                });
-                videoDiv.appendChild(downloadButton);
-
-                resultsContainer.appendChild(videoDiv);
-            });
-        }
-
-        function playVideo(videoId) {
-            resultsContainer.innerHTML = `<iframe src="http://www.youtube.com/embed/${videoId}?autoplay=1" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" allowfullscreen></iframe>`;
-        }
-    </script>
-</body>
-</html>
