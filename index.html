@@ -2,7 +2,6 @@
 <html lang="he">
 <head>
     <meta charset="UTF-8">
-    <link rel="icon" href="https://banner2.cleanpng.com/20180511/dtq/avcjqf1da.webp" type="image/svg+xml">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>YouTube Player שלי</title>
     <style>
@@ -92,6 +91,20 @@
             margin-top: 20px;
             color: #777;
         }
+        .download-button {
+            display: inline-block;
+            padding: 8px 16px;
+            background-color: #4CAF50;
+            color: white;
+            text-decoration: none;
+            border-radius: 5px;
+            font-size: 14px;
+            margin-top: 8px;
+            transition: background-color 0.3s ease;
+        }
+        .download-button:hover {
+            background-color: #45a049;
+        }
     </style>
 </head>
 <body>
@@ -158,7 +171,8 @@
 
             results.forEach(item => {
                 const videoId = item.id.videoId;
-const thumbnailUrl = item.snippet.thumbnails.maxres?.url || item.snippet.thumbnails.high.url;                const title = item.snippet.title;
+                const title = item.snippet.title;
+                const thumbnailUrl = item.snippet.thumbnails.maxres?.url || item.snippet.thumbnails.high.url;
 
                 const videoDiv = document.createElement('div');
                 videoDiv.classList.add('video-item');
@@ -166,14 +180,15 @@ const thumbnailUrl = item.snippet.thumbnails.maxres?.url || item.snippet.thumbna
                     <img src="${thumbnailUrl}" alt="${title}" class="video-thumbnail">
                     <h3 class="video-title">${title}</h3>
                     <button class="play-button" onclick="playVideo('${videoId}')">צפה</button>
+                    <a href="${thumbnailUrl}" download="${title.replace(/[^a-z0-9]/gi, '_')}.jpg" class="download-button">הורד תמונה</a>
                 `;
                 resultsContainer.appendChild(videoDiv);
             });
         }
 
         function playVideo(videoId) {
-            resultsContainer.innerHTML = `<iframe src="https://www.youtube.com/embed/${videoId}?autoplay=1" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" allowfullscreen></iframe>`;
+            resultsContainer.innerHTML = `<iframe src="http://www.youtube.com/embed/${videoId}?autoplay=1" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" allowfullscreen></iframe>`;
         }
     </script>
 </body>
-</html>
+</html>    
