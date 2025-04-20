@@ -150,7 +150,7 @@
             noResultsMessage.style.display = 'none';
             errorMessage.style.display = 'none';
 
-            const apiUrl = `https://www.googleapis.com/youtube/v3/search?part=snippet&maxResults=50&q=<span class="math-inline">\{searchTerm\}&type\=video&key\=</span>{apiKey}`;
+            const apiUrl = `https://www.googleapis.com/youtube/v3/search?part=snippet&maxResults=50&q=${searchTerm}&type=video&key=${apiKey}`;
 
             try {
                 const response = await fetch(apiUrl);
@@ -169,3 +169,48 @@
             if (results.length === 0) {
                 noResultsMessage.style.display = 'block';
                 return;
+            }
+
+            results.forEach(item => {
+                const videoId = item.id.videoId;
+                const title = item.snippet.title;
+                const thumbnailUrl = `https://i.ytimg.com/vi/${videoId}/maxresdefault.jpg`;
+
+                const videoDiv = document.createElement('div');
+                videoDiv.classList.add('video-item');
+                videoDiv.innerHTML = `
+                    <img src="${thumbnailUrl}" alt="${title}" class="video-thumbnail">
+                    <h3 class="video-title">${title}</h3>
+                    <button class="play-button" onclick="playVideo('${videoId}')">צפה</button>
+                `;
+
+                // הוספת כפתור הורדה עם לוגיקה JavaScript
+                const downloadButton = document.createElement('button');
+                downloadButton.textContent = 'הורד תמונה';
+                downloadButton.classList.add('download-button');
+                downloadButton.addEventListener('click', () => {
+                    fetch(thumbnailUrl)
+                        .then(response => response.blob())
+                        .then(blob => {
+                            const url = window.URL.createObjectURL(blob);
+                            const a = document.createElement('a');
+                            a.href = url;
+                            a.download = `${title.replace(/[^a-z0-9]/gi, '_')}.jpg`;
+                            document.body.appendChild(a);
+                            a.click();
+                            document.body.removeChild(a);
+                            window.URL.revokeObjectURL(url);
+                        });
+                });
+                videoDiv.appendChild(downloadButton);
+
+                resultsContainer.appendChild(videoDiv);
+            });
+        }
+
+        function playVideo(videoId) {
+            resultsContainer.innerHTML = `<iframe src="http://www.youtube.com/embed/${videoId}?autoplay=1" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" allowfullscreen></iframe>`;
+        }
+    </script>
+</body>
+</html>
