@@ -172,7 +172,7 @@
             results.forEach(item => {
                 const videoId = item.id.videoId;
                 const title = item.snippet.title;
-                const thumbnailUrl = item.snippet.thumbnails.maxres?.url || item.snippet.thumbnails.high.url;
+                const thumbnailUrl = `https://i.ytimg.com/vi/${videoId}/maxresdefault.jpg`;
 
                 const videoDiv = document.createElement('div');
                 videoDiv.classList.add('video-item');
@@ -191,4 +191,4 @@
         }
     </script>
 </body>
-</html>    
+</html>
