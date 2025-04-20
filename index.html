@@ -158,8 +158,7 @@
 
             results.forEach(item => {
                 const videoId = item.id.videoId;
-                const thumbnailUrl = item.snippet.thumbnails.medium.url;
-                const title = item.snippet.title;
+const thumbnailUrl = item.snippet.thumbnails.maxres?.url || item.snippet.thumbnails.high.url;                const title = item.snippet.title;
 
                 const videoDiv = document.createElement('div');
                 videoDiv.classList.add('video-item');
