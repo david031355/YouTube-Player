@@ -174,8 +174,23 @@
             results.forEach(item => {
                 const videoId = item.id.videoId;
                 const title = item.snippet.title;
-                const thumbnailUrl = `https://i.ytimg.com/vi/${videoId}/maxresdefault.jpg`;
+                const maxResThumbnailUrl = `https://i.ytimg.com/vi/${videoId}/maxresdefault.jpg`;
+                let thumbnailUrl = item.snippet.thumbnails.high?.url || item.snippet.thumbnails.medium?.url || item.snippet.thumbnails.default?.url; // ברירת מחדל
 
+                // בדיקה אם קיימת תמונה maxresdefault
+                fetch(maxResThumbnailUrl, { method: 'HEAD' })
+                    .then(response => {
+                        if (response.ok) {
+                            thumbnailUrl = maxResThumbnailUrl;
+                        }
+                        createVideoItem(videoId, title, thumbnailUrl);
+                    })
+                    .catch(() => {
+                        createVideoItem(videoId, title, thumbnailUrl);
+                    });
+            });
+
+            function createVideoItem(videoId, title, thumbnailUrl) {
                 const videoDiv = document.createElement('div');
                 videoDiv.classList.add('video-item');
                 videoDiv.innerHTML = `
@@ -184,7 +199,7 @@
                     <button class="play-button" onclick="playVideo('${videoId}')">צפה</button>
                 `;
 
-                // הוספת כפתור הורדה עם לוגיקה JavaScript
+                // הוספת כפתור הורדה
                 const downloadButton = document.createElement('button');
                 downloadButton.textContent = 'הורד תמונה';
                 downloadButton.classList.add('download-button');
@@ -205,11 +220,11 @@
                 videoDiv.appendChild(downloadButton);
 
                 resultsContainer.appendChild(videoDiv);
-            });
+            }
         }
 
         function playVideo(videoId) {
-            resultsContainer.innerHTML = `<iframe src="http://www.youtube.com/embed/${videoId}?autoplay=1" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" allowfullscreen></iframe>`;
+            resultsContainer.innerHTML = `<iframe width="100%" height="360" src="https://www.youtube.com/embed/${videoId}?autoplay=1" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" allowfullscreen></iframe>`;
         }
     </script>
 </body>
