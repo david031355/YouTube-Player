@@ -191,6 +191,48 @@
     </div>
 
     <script>
+// קוד להטמעת סרטון אם יש פרמטר searchQuery ב-URL
+        const urlParams = new URLSearchParams(window.location.search);
+        const searchQuery = urlParams.get('searchQuery');
+        const playerContainer = document.getElementById('video-player-container');
+        const playerIframe = document.getElementById('video-player-iframe');
+        const searchContainerElement = document.getElementById('search-container'); // הוספנו משתנה לאלמנט החיפוש
+
+        if (searchQuery) {
+            let videoId = null;
+            const watchRegex = /v=([a-zA-Z0-9_-]+)/;
+            const shortRegex = /youtu\.be\/([a-zA-Z0-9_-]+)/;
+
+            const watchMatch = searchQuery.match(watchRegex);
+            if (watchMatch) {
+                videoId = watchMatch[1];
+            } else {
+                const shortMatch = searchQuery.match(shortRegex);
+                if (shortMatch) {
+                    videoId = shortMatch[1];
+                }
+            }
+
+            if (videoId) {
+                playerIframe.src = `http://www.youtube.com/embed/${videoId}?autoplay=1`;
+                playerContainer.classList.remove('hidden');
+                if (searchContainerElement) {
+                    searchContainerElement.style.display = 'none';
+                }
+                document.getElementById('results-container').style.display = 'none';
+            } else {
+                // אם searchQuery קיים אבל לא מכיל מזהה תקין, הצג שוב את שורת החיפוש
+                if (searchContainerElement) {
+                    searchContainerElement.style.display = 'flex';
+                }
+                console.log('searchQuery קיים אבל לא תקין:', searchQuery);
+            }
+        } else {
+            // אם אין searchQuery, הצג את דף החיפוש הרגיל
+            if (searchContainerElement) {
+                searchContainerElement.style.display = 'flex';
+            }
+        }
         const searchInput = document.getElementById('search-input');
         const searchButton = document.getElementById('search-button');
         const resultsContainer = document.getElementById('results-container');
