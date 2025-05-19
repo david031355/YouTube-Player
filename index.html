@@ -218,8 +218,7 @@
                     }
                 }
 
-            if (videoId) {
-                playerIframe.src = `http://www.youtube.com/embed/${videoId}?autoplay=1`;
+            if (videoId) {playerIframe.src = `https://www.google.com/search?q=https://youtube.com/watch%3Fv%3D{videoId}?autoplay=1`;
                 playerContainer.classList.remove('hidden');
                 if (searchContainerElement) {
                     searchContainerElement.style.display = 'none';
