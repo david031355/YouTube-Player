@@ -198,20 +198,25 @@
         const playerIframe = document.getElementById('video-player-iframe');
         const searchContainerElement = document.getElementById('search-container'); // הוספנו משתנה לאלמנט החיפוש
 
-        if (searchQuery) {
-            let videoId = null;
-            const watchRegex = /v=([a-zA-Z0-9_-]+)/;
-            const shortRegex = /youtu\.be\/([a-zA-Z0-9_-]+)/;
+        if (searchQuery) {let videoId = null;
+                const watchRegex = /v=([a-zA-Z0-9_-]+)/;
+                const shortRegex = /youtu\.be\/([a-zA-Z0-9_-]+)/;
+                const fullRegex = /http(?:s?):\/\/(?:www\.)?youtube\.com\/watch\?v=([a-zA-Z0-9_-]+)/; // תמיכה בקישורים מלאים
 
-            const watchMatch = searchQuery.match(watchRegex);
-            if (watchMatch) {
-                videoId = watchMatch[1];
-            } else {
-                const shortMatch = searchQuery.match(shortRegex);
-                if (shortMatch) {
-                    videoId = shortMatch[1];
+                const watchMatch = searchQuery.match(watchRegex);
+                if (watchMatch) {
+                    videoId = watchMatch[1];
+                } else {
+                    const shortMatch = searchQuery.match(shortRegex);
+                    if (shortMatch) {
+                        videoId = shortMatch[1];
+                    } else {
+                        const fullMatch = searchQuery.match(fullRegex);
+                        if (fullMatch) {
+                            videoId = fullMatch[1];
+                        }
+                    }
                 }
-            }
 
             if (videoId) {
                 playerIframe.src = `http://www.youtube.com/embed/${videoId}?autoplay=1`;
