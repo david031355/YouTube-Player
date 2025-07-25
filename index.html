@@ -1,134 +1,313 @@
 <!DOCTYPE html>
-<html lang="he" dir="rtl">
+<html lang="he">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>חיפוש תמונות והורדה</title>
-    <link rel="stylesheet" href="style.css">
+    <title>YouTube Player שלי</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 20px; /* השארת מרווח מהצדדים ומלמעלה */
+            background-color: #f0f0f0;
+            color: #333;
+            display: flex;
+            flex-direction: column; /* כדי שהאלמנטים הפנימיים יהיו אחד מתחת לשני */
+            align-items: center; /* מרכוז אופקי של האלמנטים הפנימיים */
+        }
+
+        #search-container {
+            display: flex;
+            gap: 10px;
+            align-items: center;
+            margin-bottom: 30px; /* מרווח מתחת לשורת החיפוש */
+            padding: 20px;
+            background-color: #fff;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+            border-radius: 8px;
+            width: 80%; /* או רוחב אחר שתרצה */
+            max-width: 600px; /* כדי שלא יהיה רחב מדי במסכים גדולים */
+            box-sizing: border-box; /* כולל padding ו-border בחישוב הרוחב */
+            justify-content: center; /* מרכוז אופקי של האינפוט והכפתור בתוך הקונטיינר */
+        }
+
+        #search-input {
+            padding: 12px;
+            width: 70%; /* או גודל יחסי אחר */
+            border: 1px solid #ccc;
+            border-radius: 8px;
+            font-size: 16px;
+        }
+
+        #search-button {
+            padding: 12px 24px;
+            background-color: #d32f2f;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 16px;
+            transition: background-color 0.3s ease;
+        }
+
+        #search-button:hover {
+            background-color: #b71c1c;
+        }
+
+        #results-container {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
+            gap: 25px;
+            padding: 20px;
+            width: 80%;
+            max-width: 1200px;
+            box-sizing: border-box;
+        }
+
+        .video-item {
+            background-color: white;
+            border: 1px solid #ddd;
+            padding: 15px;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        .video-thumbnail {
+            width: 100%;
+            height: auto;
+            border-radius: 8px;
+            margin-bottom: 10px;
+        }
+
+        .video-title {
+            margin-top: 0;
+            font-size: 18px;
+            font-weight: bold;
+            text-align: center;
+            margin-bottom: 8px;
+        }
+
+        .play-button {
+            padding: 10px 20px;
+            background-color: #007bff;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 16px;
+            transition: background-color 0.3s ease;
+        }
+
+        .play-button:hover {
+            background-color: #0056b3;
+        }
+
+        #video-player-container {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: #000;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+        }
+
+        #video-player-container.hidden {
+            display: none;
+        }
+
+        #video-player-iframe {
+            width: 90%;
+            height: 90%;
+            border: none;
+            border-radius: 8px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
+        }
+
+        #loading-message, #no-results-message, #error-message {
+            text-align: center;
+            font-size: 18px;
+            margin-top: 20px;
+            color: #777;
+        }
+
+        .download-button {
+            display: inline-block;
+            padding: 8px 16px;
+            background-color: #4CAF50;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            font-size: 14px;
+            margin-top: 8px;
+            cursor: pointer;
+            transition: background-color 0.3s ease;
+            text-decoration: none;
+        }
+
+        .download-button:hover {
+            background-color: #45a049;
+        }
+
+        #close-button {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            padding: 10px 15px;
+            background-color: #333;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 16px;
+            z-index: 1001;
+        }
+
+        #close-button:hover {
+            background-color: #555;
+        }
+    </style>
 </head>
 <body>
-    <div class="container">
-        <h1>חיפוש תמונות</h1>
-        <div class="search-box">
-            <input type="text" id="searchInput" placeholder="הכנס מונח לחיפוש תמונות...">
-            <button id="searchButton">חפש</button>
-        </div>
-        <div id="imageResults" class="image-results">
-            </div>
+    <div id="search-container">
+        <input type="text" id="search-input" placeholder="הזן מילות חיפוש...">
+        <button id="search-button">חפש</button>
+    </div>
+    <div id="results-container">
+    </div>
+
+    <p id="loading-message" style="display:none;">טוען תוצאות...</p>
+    <p id="no-results-message" style="display:none;">לא נמצאו תוצאות.</p>
+    <p id="error-message" style="display:none;">אירעה שגיאה בעת טעינת התוצאות.</p>
+
+    <div id="video-player-container" class="hidden">
+        <iframe id="video-player-iframe" src="" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" allowfullscreen></iframe>
+        <button id="close-button">סגור</button>
     </div>
 
     <script>
-        document.getElementById('searchButton').addEventListener('click', fetchImages);
-        document.getElementById('searchInput').addEventListener('keypress', function(e) {
-            // מפעיל חיפוש גם בלחיצה על Enter
-            if (e.key === 'Enter') {
-                fetchImages();
+        const searchInput = document.getElementById('search-input');
+        const searchButton = document.getElementById('search-button');
+        const resultsContainer = document.getElementById('results-container');
+        const loadingMessage = document.getElementById('loading-message');
+        const noResultsMessage = document.getElementById('no-results-message');
+        const errorMessage = document.getElementById('error-message');
+        const videoPlayerContainer = document.getElementById('video-player-container');
+        const videoPlayerIframe = document.getElementById('video-player-iframe');
+        const closeButton = document.getElementById('close-button');
+        const apiKey = 'AIzaSyDSwtEYVjTDsZEvBlx8a_edqYcnPDbcC0I';
+
+        searchButton.addEventListener('click', performSearch);
+
+        searchInput.addEventListener('keypress', function(event) {
+            if (event.key === 'Enter') {
+                performSearch();
             }
         });
 
-        async function fetchImages() {
-            const query = document.getElementById('searchInput').value.trim();
-            const imageResultsDiv = document.getElementById('imageResults');
-
-            // מנקה תוצאות קודמות ומציג הודעת טעינה
-            imageResultsDiv.innerHTML = '<p>מחפש תמונות...</p>';
-
-            if (!query) {
-                imageResultsDiv.innerHTML = '<p>אנא הזן מונח לחיפוש.</p>';
+        async function performSearch() {
+            const searchTerm = searchInput.value.trim();
+            if (!searchTerm) {
+                alert('אנא הזן מילת חיפוש.');
                 return;
             }
 
-            // *** מפתח ה-API ומזהה מנוע החיפוש שלך ***
-            // ודא שהם נכונים ותקפים!
-            const API_KEY = 'AIzaSyB1kqz1jnNp_eUezkT_kKxj6o8rAOhXofc'; 
-            const CX_ID = 'a5c7bb1306c354f13'; 
+            resultsContainer.innerHTML = '';
+            loadingMessage.style.display = 'block';
+            noResultsMessage.style.display = 'none';
+            errorMessage.style.display = 'none';
+            videoPlayerContainer.classList.add('hidden'); // הסתרת נגן אם מוצג
 
-            // מספר התוצאות המקסימלי שתרצה לנסות להביא
-            // שימו לב: Google Custom Search API מאפשר עד 10 תוצאות לקריאה אחת, ו-100 קריאות חינם ליום.
-            // אם תבקשו 30 תמונות, כל חיפוש יבצע 3 קריאות API.
-            const maxResultsToFetch = 30; // ניתן לשנות ערך זה
-            let allItems = [];
+            const apiUrl = `https://www.googleapis.com/youtube/v3/search?part=snippet&maxResults=50&q=${searchTerm}&type=video&key=${apiKey}`;
 
             try {
-                // לולאה לביצוע מספר קריאות API להשגת יותר מ-10 תוצאות
-                // כל איטרציה מבקשת 10 תוצאות נוספות, החל מהאינדקס המתאים
-                for (let i = 0; i < maxResultsToFetch / 10; i++) {
-                    const startIndex = i * 10 + 1; // 1, 11, 21, וכן הלאה
-                    const searchUrl = `https://www.googleapis.com/customsearch/v1?q=${encodeURIComponent(query)}&cx=${CX_ID}&searchType=image&key=${API_KEY}&num=10&start=${startIndex}`;
-
-                    const response = await fetch(searchUrl);
-                    const data = await response.json();
-
-                    if (data.items) {
-                        allItems = allItems.concat(data.items);
-                    } else {
-                        // אם אין יותר תוצאות או שהייתה שגיאה בבקשה הנוכחית, עצור את הלולאה
-                        break;
-                    }
-
-                    // אופציונלי: הוספת השהייה קצרה בין קריאות API כדי למנוע חריגה ממגבלות
-                    // await new Promise(resolve => setTimeout(resolve, 100)); 
-                }
-
-                // מנקה את הודעת הטעינה
-                imageResultsDiv.innerHTML = ''; 
-
-                if (allItems.length > 0) {
-                    // עובר על כל התמונות שנאספו ומציג אותן
-                    allItems.forEach(item => {
-                        const imageUrl = item.link;
-                        const title = item.title;
-
-                        const imageItem = document.createElement('div');
-                        imageItem.classList.add('image-item');
-
-                        const img = document.createElement('img');
-                        img.src = imageUrl;
-                        img.alt = title;
-
-                        // יצירת כפתור ההורדה עם הלוגיקה החדשה
-                        const downloadButton = document.createElement('button');
-                        downloadButton.textContent = 'הורד תמונה';
-                        downloadButton.classList.add('download-button'); // ניתן להוסיף קלאס לעיצוב, אם קיים
-                        downloadButton.addEventListener('click', () => {
-                            // שימוש ב-fetch API כדי להביא את התמונה כ-Blob
-                            fetch(imageUrl)
-                                .then(response => response.blob())
-                                .then(blob => {
-                                    // יצירת URL זמני עבור ה-Blob
-                                    const url = window.URL.createObjectURL(blob);
-                                    const a = document.createElement('a');
-                                    a.href = url;
-                                    // הגדרת שם קובץ להורדה
-                                    a.download = `${title.replace(/[^a-z0-9]/gi, '_')}.jpg`;
-                                    
-                                    // הדמיית לחיצה על הקישור כדי להפעיל את ההורדה
-                                    document.body.appendChild(a); // יש להוסיף ל-DOM כדי שהלחיצה תעבוד
-                                    a.click();
-                                    document.body.removeChild(a); // ניקוי - הסרה מה-DOM
-                                    
-                                    // שחרור ה-URL הזמני לזיכרון
-                                    window.URL.revokeObjectURL(url);
-                                })
-                                .catch(error => {
-                                    console.error('שגיאה בהורדת התמונה:', error);
-                                    alert('אירעה שגיאה בניסיון להוריד את התמונה.');
-                                });
-                        });
-
-                        imageItem.appendChild(img);
-                        imageItem.appendChild(downloadButton); // הוספת כפתור ההורדה במקום הקישור הישן
-                        imageResultsDiv.appendChild(imageItem);
-                    });
-                } else {
-                    imageResultsDiv.innerHTML = '<p>לא נמצאו תמונות עבור החיפוש שלך.</p>';
-                }
-
+                const response = await fetch(apiUrl);
+                const data = await response.json();
+                loadingMessage.style.display = 'none';
+                displayResults(data.items);
             } catch (error) {
-                console.error('שגיאה בחיפוש תמונות:', error);
-                imageResultsDiv.innerHTML = '<p>אירעה שגיאה בחיפוש התמונות. אנא נסה שוב מאוחר יותר. (ייתכן וקיימת בעיה במפתח ה-API או במזהה מנוע החיפוש)</p>';
+                console.error('אירעה שגיאה בחיפוש:', error);
+                loadingMessage.style.display = 'none';
+                errorMessage.style.display = 'block';
             }
         }
+
+        function displayResults(results) {
+            resultsContainer.style.display = 'grid'; // הצגת קונטיינר התוצאות
+            resultsContainer.innerHTML = '';
+            if (results.length === 0) {
+                noResultsMessage.style.display = 'block';
+                return;
+            }
+
+            results.forEach(item => {
+                const videoId = item.id.videoId;
+                const title = item.snippet.title;
+                const maxResThumbnailUrl = `https://i.ytimg.com/vi/${videoId}/maxresdefault.jpg`;
+                let thumbnailUrl = item.snippet.thumbnails.high?.url || item.snippet.thumbnails.medium?.url || item.snippet.thumbnails.default?.url; // ברירת מחדל
+
+                // בדיקה אם קיימת תמונה maxresdefault
+                fetch(maxResThumbnailUrl, { method: 'HEAD' })
+                    .then(response => {
+                        if (response.ok) {
+                            thumbnailUrl = maxResThumbnailUrl;
+                        }
+                        createVideoItem(videoId, title, thumbnailUrl);
+                    })
+                    .catch(() => {
+                        createVideoItem(videoId, title, thumbnailUrl);
+                    });
+            });
+
+            function createVideoItem(videoId, title, thumbnailUrl) {
+                const videoDiv = document.createElement('div');
+                videoDiv.classList.add('video-item');
+                videoDiv.innerHTML = `
+                    <img src="${thumbnailUrl}" alt="${title}" class="video-thumbnail">
+                    <h3 class="video-title">${title}</h3>
+                    <button class="play-button" onclick="playVideo('${videoId}')">צפה</button>
+                `;
+
+                // הוספת כפתור הורדה
+                const downloadButton = document.createElement('button');
+                downloadButton.textContent = 'הורד תמונה';
+                downloadButton.classList.add('download-button');
+                downloadButton.addEventListener('click', () => {
+                    fetch(thumbnailUrl)
+                        .then(response => response.blob())
+                        .then(blob => {
+                            const url = window.URL.createObjectURL(blob);
+                            const a = document.createElement('a');
+                            a.href = url;
+                            a.download = `${title.replace(/[^a-z0-9]/gi, '_')}.jpg`;
+                            document.body.appendChild(a);
+                            a.click();
+                            document.body.removeChild(a);
+                            window.URL.revokeObjectURL(url);
+                        });
+                });
+                videoDiv.appendChild(downloadButton);
+
+                resultsContainer.appendChild(videoDiv);
+            }
+        }
+
+        function playVideo(videoId) {
+            resultsContainer.style.display = 'none'; // הסתרת תוצאות החיפוש
+            videoPlayerIframe.src = `https://www.youtube.com/embed/${videoId}?autoplay=1`;
+            videoPlayerContainer.classList.remove('hidden');
+        }
+
+        closeButton.addEventListener('click', () => {
+            videoPlayerContainer.classList.add('hidden');
+            videoPlayerIframe.src = ''; // עצירת הוידאו
+            resultsContainer.style.display = 'grid'; // הצגת שוב את תוצאות החיפוש
+        });
     </script>
 </body>
 </html>
