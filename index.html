@@ -72,7 +72,7 @@
             width: 90%;
             max-width: 1300px;
             box-sizing: border-box;
-            align-items: stretch; /* *** התיקון הקריטי: מאלץ פריטים למתוח את עצמם לגובה שווה *** */
+            align-items: stretch;
         }
 
         .video-item {
@@ -151,7 +151,7 @@
             width: 100%;
             gap: 10px;
             margin-bottom: 10px;
-            margin-top: auto; /* דוחף את שורת הכפתורים לתחתית המיכל המורחב */
+            margin-top: auto;
         }
         
         .secondary-button {
@@ -204,13 +204,13 @@
             transform: translateY(-1px);
         }
 
-        /* --- עיצוב הנגן הקופץ (ללא שינוי) --- */
+        /* --- עיצוב הנגן הקופץ (Container) --- */
         #video-player-container {
+            width: 100%;
+            height: 100%;
             position: fixed;
             top: 0;
             left: 0;
-            width: 100%;
-            height: 100%;
             background-color: rgba(0, 0, 0, 0.95);
             display: flex;
             justify-content: center;
@@ -223,19 +223,19 @@
         }
         
         #video-player-iframe {
-            width: 100%;
-            height: 100%;
-            max-width: none; 
-            aspect-ratio: auto; 
+            width: 95%;
+            height: 95%;
+            aspect-ratio: 16 / 9;
             border: none;
-            border-radius: 0;
-            box-shadow: none;
+            border-radius: 8px; 
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.5);
         }
 
+        /* *** תיקון 1: העברת כפתור הסגירה שמאלה *** */
         #close-button {
             position: absolute;
             top: 15px;
-            right: 15px;
+            left: 15px; /* <-- התיקון כאן (במקום right) */
             padding: 10px 15px;
             background-color: #ff0000;
             color: white;
@@ -318,7 +318,6 @@
         }
 
         async function performSearch() {
-            // ... (לוגיקת החיפוש נשארת זהה) ...
             const searchTerm = searchInput.value.trim();
             if (!searchTerm) {
                 alert('אנא הזן מילת חיפוש.');
@@ -346,8 +345,8 @@
 
                 const videoIds = searchData.items.map(item => item.id.videoId).join(',');
                 
-                // שלב 2: קריאה לקבלת נתוני סטטיסטיקה
-                const videosApiUrl = `https://www.googleapis.com/youtube/v3/videos?part=snippet,statistics&id=${videoIds}&key=${apiKey}`;
+                /* *** תיקון 2: הוספת 'status' כדי לבדוק אם הסרטון ניתן להטמעה *** */
+                const videosApiUrl = `https://www.googleapis.com/youtube/v3/videos?part=snippet,statistics,status&id=${videoIds}&key=${apiKey}`;
                 const videosResponse = await fetch(videosApiUrl);
                 const videosData = await videosResponse.json();
 
@@ -379,17 +378,21 @@
                 const likeCount = detailItem?.statistics?.likeCount || '0';
                 const publishDate = detailItem?.snippet?.publishedAt;
                 
+                /* *** תיקון 2: שליפת סטטוס ההטמעה *** */
+                const isEmbeddable = detailItem?.status?.embeddable; // יהיה true או false
+
                 const formattedViews = formatCount(viewCount, 'צפיות');
-                const formattedLikes = formatCount(likeCount, 'לייקים');
+                const formattedLikes = formatCount(likeCount, 'לייקים'); 
                 const timeAgo = publishDate ? timeSince(publishDate) : 'תאריך לא זמין';
 
                 const thumbnailUrl = searchItem.snippet.thumbnails.high?.url || searchItem.snippet.thumbnails.medium?.url || searchItem.snippet.thumbnails.default?.url; 
 
-                createVideoItem(videoId, title, thumbnailUrl, formattedViews, formattedLikes, timeAgo);
+                /* *** תיקון 2: העברת סטטוס ההטמעה לפונקציה *** */
+                createVideoItem(videoId, title, thumbnailUrl, formattedViews, formattedLikes, timeAgo, isEmbeddable);
             });
 
-            // *** פונקציה יצירת פריט וידאו (ללא שינוי) ***
-            function createVideoItem(videoId, title, thumbnailUrl, views, likes, timeAgo) {
+            /* *** תיקון 2: עדכון הפונקציה כדי שתטפל בסרטונים חסומים *** */
+            function createVideoItem(videoId, title, thumbnailUrl, views, likes, timeAgo, isEmbeddable) {
                 const videoDiv = document.createElement('div');
                 videoDiv.classList.add('video-item');
                 videoDiv.innerHTML = `
@@ -414,23 +417,47 @@
                     </div>
                 `;
 
-                // ** הוספת Event Listeners (ללא שינוי) **
+                // ** הגדרת משתנים של הכפתורים **
                 const mainActionButton = videoDiv.querySelector('.main-action-button');
+                const thumbnail = videoDiv.querySelector('.video-thumbnail');
+                const openTabButton = videoDiv.querySelector('.open-tab-button');
+                const downloadButton = videoDiv.querySelector('.download-button');
+
+                const canEmbed = (isEmbeddable === true); // טיפול ב-undefined או false
+
+                // ** שינוי כפתור "צפה" אם אי אפשר להטמיע **
+                if (!canEmbed) {
+                    mainActionButton.textContent = 'צפה (בכרטיסייה חדשה)';
+                    mainActionButton.style.backgroundColor = '#ff9800'; // צבע כתום
+                    mainActionButton.style.boxShadow = '0 2px 4px rgba(255, 152, 0, 0.4)';
+                }
+
+                // ** הוספת Event Listeners **
+                
+                // 1. כפתור "צפה" ראשי (עם לוגיקה חדשה)
                 mainActionButton.addEventListener('click', () => {
-                    playVideo(videoId); 
+                    if (canEmbed) {
+                        playVideo(videoId); // פתיחה בחלון קופץ
+                    } else {
+                        window.open(`https://www.youtube.com/watch?v=${videoId}`, '_blank'); // פתיחה בכרטיסייה חדשה
+                    }
                 });
                 
-                const thumbnail = videoDiv.querySelector('.video-thumbnail');
+                // 2. תמונה ממוזערת (עם לוגיקה חדשה)
                 thumbnail.addEventListener('click', () => {
-                    playVideo(videoId); 
+                    if (canEmbed) {
+                        playVideo(videoId); // פתיחה בחלון קופץ
+                    } else {
+                        window.open(`https://www.youtube.com/watch?v=${videoId}`, '_blank'); // פתיחה בכרטיסייה חדשה
+                    }
                 });
 
-                const openTabButton = videoDiv.querySelector('.open-tab-button');
+                // 3. כפתור "פתח בכרטיסייה חדשה" (ללא שינוי)
                 openTabButton.addEventListener('click', () => {
                     window.open(`https://www.youtube.com/watch?v=${videoId}`, '_blank');
                 });
                 
-                const downloadButton = videoDiv.querySelector('.download-button');
+                // 4. כפתור "הורד תמונה" (ללא שינוי)
                 downloadButton.addEventListener('click', () => {
                     const finalThumbnailUrl = `https://i.ytimg.com/vi/${videoId}/maxresdefault.jpg`;
                     fetch(finalThumbnailUrl, { method: 'HEAD' })
