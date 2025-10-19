@@ -5,8 +5,6 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>YouTube Player שלי</title>
     <style>
-        /* --- (CSS של body, search, וכו' - ללא שינוי) --- */
-        
         body {
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
             margin: 20px;
@@ -33,6 +31,7 @@
             justify-content: center;
         }
 
+        /* --- *** התיקון כאן *** --- */
         #search-input {
             padding: 14px;
             width: 70%;
@@ -42,8 +41,10 @@
             border-radius: 10px;
             font-size: 17px;
             transition: border-color 0.3s;
-            text-align: right;
+            text-align: right; /* יישור הטקסט לימין */
+            direction: rtl; /* קובע את כיוון הכתיבה מימין לשמאל */
         }
+        /* --- *** סוף התיקון *** --- */
 
         #search-input:focus {
             border-color: #1a73e8;
@@ -78,6 +79,7 @@
             align-items: stretch;
         }
 
+        /* --- עיצוב כרטיס וידאו (קיים) --- */
         .video-item {
             background-color: #282828;
             border: 1px solid #444;
@@ -95,6 +97,80 @@
         .video-item:hover {
             transform: translateY(-5px);
             border-color: #666;
+        }
+
+        /* --- עיצוב כרטיס ערוץ / פלייליסט --- */
+        .channel-item, .playlist-item {
+            background-color: #282828;
+            border: 1px solid #444;
+            border-radius: 12px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 20px;
+            overflow: hidden;
+            transition: transform 0.2s ease;
+            min-height: 400px;
+            box-sizing: border-box;
+        }
+        
+        .channel-item:hover, .playlist-item:hover {
+            transform: translateY(-5px);
+            border-color: #666;
+        }
+
+        .channel-thumbnail {
+            width: 150px;
+            height: 150px;
+            border-radius: 50%;
+            object-fit: cover;
+            margin-bottom: 20px;
+            border: 2px solid #555;
+        }
+
+        .playlist-thumbnail {
+            width: 100%;
+            height: auto;
+            aspect-ratio: 1 / 1;
+            object-fit: cover;
+            border-radius: 8px;
+            margin-bottom: 20px;
+        }
+        
+        .channel-title, .playlist-title {
+            font-size: 19px;
+            font-weight: 600;
+            text-align: center;
+            color: #f1f1f1;
+            margin-bottom: 10px;
+        }
+        
+        .channel-description, .playlist-description {
+            font-size: 14px;
+            color: #aaaaaa;
+            text-align: center;
+            margin-bottom: 20px;
+            flex-grow: 1;
+        }
+
+        .view-button {
+            width: 100%;
+            padding: 12px 15px;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 16px;
+            font-weight: bold;
+            text-align: center;
+            background-color: #00bcd4;
+            color: white;
+            transition: background-color 0.3s ease;
+            text-decoration: none;
+            display: block;
+        }
+        
+        .view-button:hover {
+            background-color: #0097a7;
         }
 
         .thumbnail-wrapper {
@@ -117,14 +193,13 @@
             border-radius: 12px 12px 0 0;
         }
 
-        /* --- *** התיקון כאן (CSS) *** --- */
         .video-details {
             padding: 15px 15px 20px 15px;
             width: 100%;
             box-sizing: border-box;
             display: flex;
             flex-direction: column;
-            flex-grow: 1; /* מוודא שהמיכל הזה ממלא את הגובה */
+            flex-grow: 1;
         }
 
         .video-title {
@@ -134,16 +209,13 @@
             text-align: right;
             margin-bottom: 10px;
             color: #f1f1f1;
-            /* הסרנו גובה מינימלי כדי לאפשר גמישות */
         }
         
-        /* 1. הוספנו קלאס חדש שיעטוף את הסטטיסטיקה והכפתורים */
         .video-footer {
             width: 100%;
-            margin-top: auto; /* 2. זהו התיקון! דוחף את כל הבלוק לתחתית */
+            margin-top: auto;
         }
         
-        /* 3. שאר ההגדרות נשארות כמעט זהות */
         .video-stats {
             display: flex;
             flex-wrap: nowrap;
@@ -175,12 +247,10 @@
             width: 100%;
             gap: 10px;
             margin-bottom: 10px;
-            /* margin-top: auto; <-- 4. הסרנו את זה מפה, זה עבר ל-video-footer */
             justify-content: flex-end;
         }
         
         .secondary-button {
-            /* flex-grow: 1; <-- זה הוסר בתיקון הקודם ונשאר בחוץ */
             padding: 10px 15px;
             border: none;
             border-radius: 8px;
@@ -189,7 +259,6 @@
             font-weight: 500;
             transition: background-color 0.3s ease;
         }
-        /* --- *** סוף התיקון *** --- */
 
         .download-button {
             background-color: #4CAF50;
@@ -219,7 +288,6 @@
             font-weight: bold;
             transition: background-color 0.3s ease, transform 0.1s;
             text-align: center;
-            
             background-color: #ff0000;
             color: white;
             box-shadow: 0 2px 4px rgba(255, 0, 0, 0.4);
@@ -230,7 +298,6 @@
             transform: translateY(-1px);
         }
 
-        /* --- (CSS של הנגן וכפתור הסגירה - ללא שינוי) --- */
         #video-player-container {
             width: 100%;
             height: 100%;
@@ -301,7 +368,7 @@
     </div>
 
     <script>
-        // *** (JavaScript - ללא שינוי בפונקציות העזר או ב-performSearch) ***
+        // *** (כל ה-JavaScript נשאר זהה לחלוטין) ***
         const searchInput = document.getElementById('search-input');
         const searchButton = document.getElementById('search-button');
         const resultsContainer = document.getElementById('results-container');
@@ -362,7 +429,7 @@
             videoPlayerContainer.classList.add('hidden');
 
             try {
-                const searchApiUrl = `https://www.googleapis.com/youtube/v3/search?part=snippet&maxResults=50&q=${searchTerm}&type=video&key=${apiKey}`;
+                const searchApiUrl = `https://www.googleapis.com/youtube/v3/search?part=snippet&maxResults=50&q=${searchTerm}&key=${apiKey}`;
                 const searchResponse = await fetch(searchApiUrl);
                 const searchData = await searchResponse.json();
                 
@@ -378,19 +445,17 @@
                     .map(item => item.id.videoId)
                     .join(',');
                 
-                if (!videoIds) {
-                    noResultsMessage.style.display = 'block';
-                    return;
-                }
-
-                const videosApiUrl = `https://www.googleapis.com/youtube/v3/videos?part=snippet,statistics,status&id=${videoIds}&key=${apiKey}`;
-                const videosResponse = await fetch(videosApiUrl);
-                const videosData = await videosResponse.json();
-
                 const videoDetailsMap = new Map();
-                videosData.items.forEach(item => {
-                    videoDetailsMap.set(item.id, item);
-                });
+
+                if (videoIds) {
+                    const videosApiUrl = `https://www.googleapis.com/youtube/v3/videos?part=snippet,statistics,status&id=${videoIds}&key=${apiKey}`;
+                    const videosResponse = await fetch(videosApiUrl);
+                    const videosData = await videosResponse.json();
+
+                    videosData.items.forEach(item => {
+                        videoDetailsMap.set(item.id, item);
+                    });
+                }
 
                 displayResults(searchData.items, videoDetailsMap);
 
@@ -406,35 +471,37 @@
             resultsContainer.innerHTML = '';
             
             searchResults.forEach(searchItem => {
-                if (searchItem.id.kind !== 'youtube#video') {
-                    return;
+                
+                if (searchItem.id.kind === 'youtube#video') {
+                    const videoId = searchItem.id.videoId;
+                    const detailItem = videoDetailsMap.get(videoId); 
+
+                    if (!detailItem) return;
+
+                    const title = detailItem.snippet.title;
+                    const viewCount = detailItem.statistics?.viewCount || '0';
+                    const likeCount = detailItem.statistics?.likeCount || '0';
+                    const publishDate = detailItem.snippet?.publishedAt;
+                    const isEmbeddable = detailItem.status?.embeddable;
+                    const formattedViews = formatCount(viewCount, 'צפיות');
+                    const formattedLikes = formatCount(likeCount, 'לייקים'); 
+                    const timeAgo = publishDate ? timeSince(publishDate) : 'תאריך לא זמין';
+                    const thumbnailUrl = detailItem.snippet.thumbnails.high?.url || detailItem.snippet.thumbnails.medium?.url || detailItem.snippet.thumbnails.default?.url; 
+
+                    createVideoItem(videoId, title, thumbnailUrl, formattedViews, formattedLikes, timeAgo, isEmbeddable);
+                
+                } else if (searchItem.id.kind === 'youtube#channel') {
+                    createChannelItem(searchItem);
+                
+                } else if (searchItem.id.kind === 'youtube#playlist') {
+                    createPlaylistItem(searchItem);
                 }
-
-                const videoId = searchItem.id.videoId;
-                const title = searchItem.snippet.title;
-                
-                const detailItem = videoDetailsMap.get(videoId); 
-
-                const viewCount = detailItem?.statistics?.viewCount || '0';
-                const likeCount = detailItem?.statistics?.likeCount || '0';
-                const publishDate = detailItem?.snippet?.publishedAt;
-                
-                const isEmbeddable = detailItem?.status?.embeddable;
-
-                const formattedViews = formatCount(viewCount, 'צפיות');
-                const formattedLikes = formatCount(likeCount, 'לייקים'); 
-                const timeAgo = publishDate ? timeSince(publishDate) : 'תאריך לא זמין';
-
-                const thumbnailUrl = searchItem.snippet.thumbnails.high?.url || searchItem.snippet.thumbnails.medium?.url || searchItem.snippet.thumbnails.default?.url; 
-
-                createVideoItem(videoId, title, thumbnailUrl, formattedViews, formattedLikes, timeAgo, isEmbeddable);
             });
 
             function createVideoItem(videoId, title, thumbnailUrl, views, likes, timeAgo, isEmbeddable) {
                 const videoDiv = document.createElement('div');
                 videoDiv.classList.add('video-item');
                 
-                // --- *** התיקון כאן (JS - מבנה HTML) *** ---
                 videoDiv.innerHTML = `
                     <div class="thumbnail-wrapper"> 
 <img src="${thumbnailUrl}" alt="${title}" class="video-thumbnail" data-video-id="${videoId}">
@@ -461,13 +528,11 @@
                         </div>
                     </div>
                 `;
-                // --- *** סוף התיקון *** ---
 
                 const mainActionButton = videoDiv.querySelector('.main-action-button');
                 const thumbnailWrapper = videoDiv.querySelector('.thumbnail-wrapper');
                 const openTabButton = videoDiv.querySelector('.open-tab-button');
                 const downloadButton = videoDiv.querySelector('.download-button');
-
                 const canEmbed = (isEmbeddable === true);
 
                 if (!canEmbed) {
@@ -522,6 +587,42 @@
                 });
 
                 resultsContainer.appendChild(videoDiv);
+            }
+
+            function createChannelItem(item) {
+                const channelId = item.id.channelId;
+                const title = item.snippet.title;
+                const description = item.snippet.description;
+                const thumbnailUrl = item.snippet.thumbnails.high?.url || item.snippet.thumbnails.medium?.url;
+                const channelUrl = `https://www.youtube.com/channel/${channelId}`;
+
+                const channelDiv = document.createElement('div');
+                channelDiv.classList.add('channel-item');
+                channelDiv.innerHTML = `
+                    <img src="${thumbnailUrl}" alt="${title}" class="channel-thumbnail">
+                    <h3 class="channel-title">${title}</h3>
+                    <p class="channel-description">${description}</p>
+                    <a href="${channelUrl}" target="_blank" class="view-button">צפה בערוץ</a>
+                `;
+                resultsContainer.appendChild(channelDiv);
+            }
+
+            function createPlaylistItem(item) {
+                const playlistId = item.id.playlistId;
+                const title = item.snippet.title;
+                const channelTitle = item.snippet.channelTitle;
+                const thumbnailUrl = item.snippet.thumbnails.high?.url || item.snippet.thumbnails.medium?.url;
+                const playlistUrl = `https://www.youtube.com/playlist?list=${playlistId}`;
+
+                const playlistDiv = document.createElement('div');
+                playlistDiv.classList.add('playlist-item');
+                playlistDiv.innerHTML = `
+                    <img src="${thumbnailUrl}" alt="${title}" class="playlist-thumbnail">
+                    <h3 class="playlist-title">${title}</h3>
+                    <p class="playlist-description">פלייליסט מאת: ${channelTitle}</p>
+                    <a href="${playlistUrl}" target="_blank" class="view-button">צפה בפלייליסט</a>
+                `;
+                resultsContainer.appendChild(playlistDiv);
             }
         }
         
