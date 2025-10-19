@@ -5,25 +5,27 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>YouTube Player שלי</title>
     <style>
+        /* --- (CSS של body, search, וכו' - ללא שינוי) --- */
+        
         body {
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
             margin: 20px;
-            background-color: #e9ebee;
-            color: #333;
+            background-color: #121212;
+            color: #e0e0e0;
             display: flex;
             flex-direction: column;
             align-items: center;
         }
 
-        /* --- קונטיינר החיפוש (ללא שינוי) --- */
         #search-container {
             display: flex;
             gap: 15px;
             align-items: center;
             margin-bottom: 40px;
             padding: 20px;
-            background-color: #fff;
-            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+            background-color: #282828;
+            border: 1px solid #444;
+            box-shadow: none;
             border-radius: 12px;
             width: 85%;
             max-width: 700px;
@@ -34,7 +36,9 @@
         #search-input {
             padding: 14px;
             width: 70%;
-            border: 2px solid #ddd;
+            background-color: #121212;
+            color: #e0e0e0;
+            border: 2px solid #555;
             border-radius: 10px;
             font-size: 17px;
             transition: border-color 0.3s;
@@ -63,7 +67,6 @@
             transform: translateY(-1px);
         }
 
-        /* --- קונטיינר התוצאות --- */
         #results-container {
             display: grid;
             grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
@@ -76,10 +79,10 @@
         }
 
         .video-item {
-            background-color: white;
-            border: 1px solid #eee;
+            background-color: #282828;
+            border: 1px solid #444;
+            box-shadow: none;
             border-radius: 12px;
-            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.08);
             display: flex;
             flex-direction: column;
             align-items: flex-end;
@@ -91,24 +94,37 @@
         
         .video-item:hover {
             transform: translateY(-5px);
-            box-shadow: 0 6px 15px rgba(0, 0, 0, 0.15);
+            border-color: #666;
         }
 
-        .video-thumbnail {
+        .thumbnail-wrapper {
+            position: relative;
             width: 100%;
-            height: auto;
+            padding-bottom: 56.25%;
+            overflow: hidden;
             border-radius: 12px 12px 0 0;
             margin-bottom: 0;
             cursor: pointer;
         }
 
+        .video-thumbnail {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            border-radius: 12px 12px 0 0;
+        }
+
+        /* --- *** התיקון כאן (CSS) *** --- */
         .video-details {
             padding: 15px 15px 20px 15px;
             width: 100%;
             box-sizing: border-box;
             display: flex;
             flex-direction: column;
-            flex-grow: 1;
+            flex-grow: 1; /* מוודא שהמיכל הזה ממלא את הגובה */
         }
 
         .video-title {
@@ -117,9 +133,17 @@
             font-weight: 600;
             text-align: right;
             margin-bottom: 10px;
-            color: #212121;
+            color: #f1f1f1;
+            /* הסרנו גובה מינימלי כדי לאפשר גמישות */
         }
-
+        
+        /* 1. הוספנו קלאס חדש שיעטוף את הסטטיסטיקה והכפתורים */
+        .video-footer {
+            width: 100%;
+            margin-top: auto; /* 2. זהו התיקון! דוחף את כל הבלוק לתחתית */
+        }
+        
+        /* 3. שאר ההגדרות נשארות כמעט זהות */
         .video-stats {
             display: flex;
             flex-wrap: nowrap;
@@ -127,7 +151,7 @@
             width: 100%;
             justify-content: flex-end;
             font-size: 12px;
-            color: #777;
+            color: #aaaaaa;
             margin-bottom: 10px;
             gap: 10px;
             direction: rtl;
@@ -143,7 +167,7 @@
         .stat-icon {
             font-size: 16px;
             line-height: 1;
-            color: #999;
+            color: #aaaaaa;
         }
         
         .action-row {
@@ -151,11 +175,12 @@
             width: 100%;
             gap: 10px;
             margin-bottom: 10px;
-            margin-top: auto;
+            /* margin-top: auto; <-- 4. הסרנו את זה מפה, זה עבר ל-video-footer */
+            justify-content: flex-end;
         }
         
         .secondary-button {
-            flex-grow: 1;
+            /* flex-grow: 1; <-- זה הוסר בתיקון הקודם ונשאר בחוץ */
             padding: 10px 15px;
             border: none;
             border-radius: 8px;
@@ -164,6 +189,7 @@
             font-weight: 500;
             transition: background-color 0.3s ease;
         }
+        /* --- *** סוף התיקון *** --- */
 
         .download-button {
             background-color: #4CAF50;
@@ -184,7 +210,7 @@
         }
         
         .main-action-button {
-            flex-grow: 1; 
+            flex-grow: 1;
             padding: 12px 15px;
             border: none;
             border-radius: 8px;
@@ -204,7 +230,7 @@
             transform: translateY(-1px);
         }
 
-        /* --- עיצוב הנגן הקופץ (Container) --- */
+        /* --- (CSS של הנגן וכפתור הסגירה - ללא שינוי) --- */
         #video-player-container {
             width: 100%;
             height: 100%;
@@ -231,11 +257,10 @@
             box-shadow: 0 4px 8px rgba(0, 0, 0, 0.5);
         }
 
-        /* *** תיקון 1: העברת כפתור הסגירה שמאלה *** */
         #close-button {
             position: absolute;
             top: 15px;
-            left: 15px; /* <-- התיקון כאן (במקום right) */
+            left: 15px;
             padding: 10px 15px;
             background-color: #ff0000;
             color: white;
@@ -248,6 +273,13 @@
         
         #close-button:hover {
             background-color: #cc0000;
+        }
+
+        #loading-message, #no-results-message, #error-message {
+            text-align: center;
+            font-size: 18px;
+            margin-top: 20px;
+            color: #aaaaaa;
         }
     </style>
 </head>
@@ -269,7 +301,7 @@
     </div>
 
     <script>
-        // *** המשתנים הקיימים ***
+        // *** (JavaScript - ללא שינוי בפונקציות העזר או ב-performSearch) ***
         const searchInput = document.getElementById('search-input');
         const searchButton = document.getElementById('search-button');
         const resultsContainer = document.getElementById('results-container');
@@ -289,7 +321,6 @@
             }
         });
         
-        // פונקציות עזר לפורמט (ללא שינוי)
         function formatCount(count, unit) {
             const num = parseInt(count);
             if (isNaN(num) || num === 0) return `0 ${unit}`;
@@ -331,7 +362,6 @@
             videoPlayerContainer.classList.add('hidden');
 
             try {
-                // שלב 1: חיפוש וידאו
                 const searchApiUrl = `https://www.googleapis.com/youtube/v3/search?part=snippet&maxResults=50&q=${searchTerm}&type=video&key=${apiKey}`;
                 const searchResponse = await fetch(searchApiUrl);
                 const searchData = await searchResponse.json();
@@ -343,9 +373,16 @@
                     return;
                 }
 
-                const videoIds = searchData.items.map(item => item.id.videoId).join(',');
+                const videoIds = searchData.items
+                    .filter(item => item.id.kind === 'youtube#video')
+                    .map(item => item.id.videoId)
+                    .join(',');
                 
-                /* *** תיקון 2: הוספת 'status' כדי לבדוק אם הסרטון ניתן להטמעה *** */
+                if (!videoIds) {
+                    noResultsMessage.style.display = 'block';
+                    return;
+                }
+
                 const videosApiUrl = `https://www.googleapis.com/youtube/v3/videos?part=snippet,statistics,status&id=${videoIds}&key=${apiKey}`;
                 const videosResponse = await fetch(videosApiUrl);
                 const videosData = await videosResponse.json();
@@ -369,6 +406,10 @@
             resultsContainer.innerHTML = '';
             
             searchResults.forEach(searchItem => {
+                if (searchItem.id.kind !== 'youtube#video') {
+                    return;
+                }
+
                 const videoId = searchItem.id.videoId;
                 const title = searchItem.snippet.title;
                 
@@ -378,8 +419,7 @@
                 const likeCount = detailItem?.statistics?.likeCount || '0';
                 const publishDate = detailItem?.snippet?.publishedAt;
                 
-                /* *** תיקון 2: שליפת סטטוס ההטמעה *** */
-                const isEmbeddable = detailItem?.status?.embeddable; // יהיה true או false
+                const isEmbeddable = detailItem?.status?.embeddable;
 
                 const formattedViews = formatCount(viewCount, 'צפיות');
                 const formattedLikes = formatCount(likeCount, 'לייקים'); 
@@ -387,77 +427,75 @@
 
                 const thumbnailUrl = searchItem.snippet.thumbnails.high?.url || searchItem.snippet.thumbnails.medium?.url || searchItem.snippet.thumbnails.default?.url; 
 
-                /* *** תיקון 2: העברת סטטוס ההטמעה לפונקציה *** */
                 createVideoItem(videoId, title, thumbnailUrl, formattedViews, formattedLikes, timeAgo, isEmbeddable);
             });
 
-            /* *** תיקון 2: עדכון הפונקציה כדי שתטפל בסרטונים חסומים *** */
             function createVideoItem(videoId, title, thumbnailUrl, views, likes, timeAgo, isEmbeddable) {
                 const videoDiv = document.createElement('div');
                 videoDiv.classList.add('video-item');
+                
+                // --- *** התיקון כאן (JS - מבנה HTML) *** ---
                 videoDiv.innerHTML = `
-                    <img src="${thumbnailUrl}" alt="${title}" class="video-thumbnail" data-video-id="${videoId}">
+                    <div class="thumbnail-wrapper"> 
+<img src="${thumbnailUrl}" alt="${title}" class="video-thumbnail" data-video-id="${videoId}">
+                    </div>
+                    
                     <div class="video-details">
                         <h3 class="video-title" title="${title}">${title}</h3>
                         
-                        <div class="video-stats">
-                            <span class="stat-item"><span class="stat-icon">🕒</span> ${timeAgo}</span>
-                            <span class="stat-item"><span class="stat-icon">👁️</span> ${views}</span>
-                            <span class="stat-item"><span class="stat-icon">👍</span> ${likes}</span> 
-                        </div>
-
-                        <div class="action-row">
-                            <button class="secondary-button download-button" data-video-id="${videoId}">הורד תמונה</button>
-                            <button class="secondary-button open-tab-button" data-video-id="${videoId}">פתח בכרטיסייה חדשה</button>
-                        </div>
-                        
-                        <div class="action-row">
-                            <button class="main-action-button" data-video-id="${videoId}">צפה</button>
+                        <div class="video-footer">
+                            <div class="video-stats">
+                                <span class="stat-item"><span class="stat-icon">🕒</span> ${timeAgo}</span>
+                                <span class="stat-item"><span class="stat-icon">👁️</span> ${views}</span>
+                                <span class="stat-item"><span class="stat-icon">👍</span> ${likes}</span> 
+                            </div>
+    
+                            <div class="action-row">
+                                <button class="secondary-button download-button" data-video-id="${videoId}">הורד תמונה</button>
+                                <button class="secondary-button open-tab-button" data-video-id="${videoId}">פתח בכרטיסייה חדשה</button>
+                            </div>
+                            
+                            <div class="action-row">
+                                <button class="main-action-button" data-video-id="${videoId}">צפה</button>
+                            </div>
                         </div>
                     </div>
                 `;
+                // --- *** סוף התיקון *** ---
 
-                // ** הגדרת משתנים של הכפתורים **
                 const mainActionButton = videoDiv.querySelector('.main-action-button');
-                const thumbnail = videoDiv.querySelector('.video-thumbnail');
+                const thumbnailWrapper = videoDiv.querySelector('.thumbnail-wrapper');
                 const openTabButton = videoDiv.querySelector('.open-tab-button');
                 const downloadButton = videoDiv.querySelector('.download-button');
 
-                const canEmbed = (isEmbeddable === true); // טיפול ב-undefined או false
+                const canEmbed = (isEmbeddable === true);
 
-                // ** שינוי כפתור "צפה" אם אי אפשר להטמיע **
                 if (!canEmbed) {
                     mainActionButton.textContent = 'צפה (בכרטיסייה חדשה)';
-                    mainActionButton.style.backgroundColor = '#ff9800'; // צבע כתום
+                    mainActionButton.style.backgroundColor = '#ff9800';
                     mainActionButton.style.boxShadow = '0 2px 4px rgba(255, 152, 0, 0.4)';
                 }
 
-                // ** הוספת Event Listeners **
-                
-                // 1. כפתור "צפה" ראשי (עם לוגיקה חדשה)
                 mainActionButton.addEventListener('click', () => {
                     if (canEmbed) {
-                        playVideo(videoId); // פתיחה בחלון קופץ
+                        playVideo(videoId);
                     } else {
-                        window.open(`https://www.youtube.com/watch?v=${videoId}`, '_blank'); // פתיחה בכרטיסייה חדשה
+                        window.open(`https://www.youtube.com/watch?v=${videoId}`, '_blank');
                     }
                 });
                 
-                // 2. תמונה ממוזערת (עם לוגיקה חדשה)
-                thumbnail.addEventListener('click', () => {
+                thumbnailWrapper.addEventListener('click', () => {
                     if (canEmbed) {
-                        playVideo(videoId); // פתיחה בחלון קופץ
+                        playVideo(videoId);
                     } else {
-                        window.open(`https://www.youtube.com/watch?v=${videoId}`, '_blank'); // פתיחה בכרטיסייה חדשה
+                        window.open(`https://www.youtube.com/watch?v=${videoId}`, '_blank');
                     }
                 });
 
-                // 3. כפתור "פתח בכרטיסייה חדשה" (ללא שינוי)
                 openTabButton.addEventListener('click', () => {
                     window.open(`https://www.youtube.com/watch?v=${videoId}`, '_blank');
                 });
                 
-                // 4. כפתור "הורד תמונה" (ללא שינוי)
                 downloadButton.addEventListener('click', () => {
                     const finalThumbnailUrl = `https://i.ytimg.com/vi/${videoId}/maxresdefault.jpg`;
                     fetch(finalThumbnailUrl, { method: 'HEAD' })
@@ -487,7 +525,6 @@
             }
         }
         
-        // ** לוגיקת playVideo ו-closeButton (ללא שינוי) **
         function playVideo(videoId) {
             scrollPosition = window.scrollY; 
             resultsContainer.style.display = 'none';
