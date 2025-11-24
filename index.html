@@ -26,7 +26,7 @@
             box-shadow: none;
             border-radius: 12px;
             width: 85%;
-            max-width: 800px; /* הוגדל מעט כדי להכיל את הסינון */
+            max-width: 800px;
             box-sizing: border-box;
             justify-content: center;
         }
@@ -49,7 +49,7 @@
 
         #search-input {
             padding: 14px;
-            flex-grow: 1; /* שונה מרוחב קבוע כדי למלא את המקום שנותר */
+            flex-grow: 1;
             background-color: #121212;
             color: #e0e0e0;
             border: 2px solid #555;
@@ -370,7 +370,6 @@
             <option value="relevance">רלוונטיות</option>
             <option value="date">תאריך (חדש לישן)</option>
             <option value="viewCount">הכי נצפה</option>
-            <option value="rating">דירוג גבוה</option>
         </select>
         <input type="text" id="search-input" placeholder="הזן מילות חיפוש...">
         <button id="search-button">חפש</button>
@@ -397,7 +396,7 @@
         const videoPlayerContainer = document.getElementById('video-player-container');
         const videoPlayerIframe = document.getElementById('video-player-iframe');
         const closeButton = document.getElementById('close-button');
-        const sortSelect = document.getElementById('sort-select'); // הפנייה לאלמנט הסינון החדש
+        const sortSelect = document.getElementById('sort-select');
         const apiKey = 'AIzaSyDSwtEYVjTDsZEvBlx8a_edqYcnPDbcC0I'; 
         let scrollPosition = 0;
         
@@ -448,7 +447,7 @@
 
         async function performSearch() {
             const searchTerm = searchInput.value.trim();
-            const sortOrder = sortSelect.value; // קבלת ערך הסינון הנבחר
+            const sortOrder = sortSelect.value; 
 
             if (!searchTerm) {
                 alert('אנא הזן מילת חיפוש.');
@@ -489,12 +488,23 @@
                     videoDetailsMap.set(videoItem.id, videoItem);
 
                 } else {
-                    // הוספת פרמטר ה-order לקריאת ה-API
-                    const searchApiUrl = `https://www.googleapis.com/youtube/v3/search?part=snippet&maxResults=50&q=${searchTerm}&order=${sortOrder}&key=${apiKey}`;
+                    let searchApiUrl = `https://www.googleapis.com/youtube/v3/search?part=snippet&maxResults=50&q=${searchTerm}&order=${sortOrder}&key=${apiKey}`;
+                    
+                    // *** תיקון קריטי: הוספת סינון לסוג וידאו בעת מיון ***
+                    // כאשר ממיינים לפי צפיות או תאריך, ה-API עובד יציב יותר אם מגבילים לוידאו בלבד
+                    if (sortOrder === 'viewCount' || sortOrder === 'date') {
+                        searchApiUrl += '&type=video';
+                    }
+
                     const searchResponse = await fetch(searchApiUrl);
+                    
+                    if (!searchResponse.ok) {
+                        throw new Error(`API Error: ${searchResponse.status}`);
+                    }
+
                     const searchData = await searchResponse.json();
 
-                    if (searchData.items.length === 0) {
+                    if (!searchData.items || searchData.items.length === 0) {
                         noResultsMessage.style.display = 'block';
                         loadingMessage.style.display = 'none';
                         return;
