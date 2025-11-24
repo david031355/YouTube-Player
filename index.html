@@ -26,7 +26,7 @@
             box-shadow: none;
             border-radius: 12px;
             width: 85%;
-            max-width: 800px;
+            max-width: 850px;
             box-sizing: border-box;
             justify-content: center;
         }
@@ -368,8 +368,9 @@
     <div id="search-container">
         <select id="sort-select">
             <option value="relevance">רלוונטיות</option>
-            <option value="date">תאריך (חדש לישן)</option>
-            <option value="viewCount">הכי נצפה</option>
+            <option value="date">חדש ביותר (Date)</option>
+            <option value="viewCount_client">הכי נצפה (סינון ידני)</option>
+            <option value="rating_client">הכי פופולרי (סינון ידני)</option>
         </select>
         <input type="text" id="search-input" placeholder="הזן מילות חיפוש...">
         <button id="search-button">חפש</button>
@@ -488,20 +489,20 @@
                     videoDetailsMap.set(videoItem.id, videoItem);
 
                 } else {
-                    let searchApiUrl = `https://www.googleapis.com/youtube/v3/search?part=snippet&maxResults=50&q=${searchTerm}&order=${sortOrder}&key=${apiKey}`;
+                    // *** לוגיקה היברידית לפי בקשתך ***
+                    // 1. אם נבחר 'date', שולחים order=date ל-API (כי חשוב לקבל תוכן חדש מהשרת)
+                    // 2. בכל מקרה אחר (רלוונטיות, צפיות, פופולריות), שולחים בקשה רגילה (relevance)
+                    //    את הסינון של צפיות/פופולריות נעשה אצלנו בדפדפן (Client Side) בשלב הבא
                     
-                    // *** תיקון קריטי: הוספת סינון לסוג וידאו בעת מיון ***
-                    // כאשר ממיינים לפי צפיות או תאריך, ה-API עובד יציב יותר אם מגבילים לוידאו בלבד
-                    if (sortOrder === 'viewCount' || sortOrder === 'date') {
-                        searchApiUrl += '&type=video';
+                    let apiSortParam = 'relevance'; // ברירת מחדל
+                    if (sortOrder === 'date') {
+                        apiSortParam = 'date';
                     }
 
+                    const searchApiUrl = `https://www.googleapis.com/youtube/v3/search?part=snippet&maxResults=50&q=${searchTerm}&order=${apiSortParam}&key=${apiKey}`;
+                    
                     const searchResponse = await fetch(searchApiUrl);
-                    
-                    if (!searchResponse.ok) {
-                        throw new Error(`API Error: ${searchResponse.status}`);
-                    }
-
+                    if (!searchResponse.ok) throw new Error(`API Error: ${searchResponse.status}`);
                     const searchData = await searchResponse.json();
 
                     if (!searchData.items || searchData.items.length === 0) {
@@ -525,6 +526,23 @@
                             videoDetailsMap.set(item.id, item);
                         });
                     }
+
+                    // *** סינון צד-לקוח (Client Side Sorting) ***
+                    // אם המשתמש בחר "הכי נצפה" או "הכי פופולרי", אנחנו ממיינים את הרשימה שכבר קיבלנו
+                    if (sortOrder === 'viewCount_client') {
+                        searchResults.sort((a, b) => {
+                            // שליפת נתוני צפיות מה-Map. אם אין (למשל ערוץ), נחשב כ-0
+                            const statsA = getStats(a, videoDetailsMap);
+                            const statsB = getStats(b, videoDetailsMap);
+                            return parseInt(statsB.viewCount) - parseInt(statsA.viewCount);
+                        });
+                    } else if (sortOrder === 'rating_client') {
+                        searchResults.sort((a, b) => {
+                            const statsA = getStats(a, videoDetailsMap);
+                            const statsB = getStats(b, videoDetailsMap);
+                            return parseInt(statsB.likeCount) - parseInt(statsA.likeCount);
+                        });
+                    }
                 }
                 
                 loadingMessage.style.display = 'none';
@@ -535,6 +553,20 @@
                 loadingMessage.style.display = 'none';
                 errorMessage.style.display = 'block';
             }
+        }
+
+        // פונקציית עזר לשליפת סטטיסטיקות עבור המיון
+        function getStats(searchItem, videoDetailsMap) {
+            if (searchItem.id.kind === 'youtube#video') {
+                const detail = videoDetailsMap.get(searchItem.id.videoId);
+                if (detail && detail.statistics) {
+                    return {
+                        viewCount: detail.statistics.viewCount || 0,
+                        likeCount: detail.statistics.likeCount || 0
+                    };
+                }
+            }
+            return { viewCount: 0, likeCount: 0 };
         }
 
         function displayResults(searchResults, videoDetailsMap) {
