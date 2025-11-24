@@ -26,14 +26,30 @@
             box-shadow: none;
             border-radius: 12px;
             width: 85%;
-            max-width: 700px;
+            max-width: 800px; /* הוגדל מעט כדי להכיל את הסינון */
             box-sizing: border-box;
             justify-content: center;
         }
 
+        #sort-select {
+            padding: 14px;
+            background-color: #121212;
+            color: #e0e0e0;
+            border: 2px solid #555;
+            border-radius: 10px;
+            font-size: 16px;
+            cursor: pointer;
+            outline: none;
+            transition: border-color 0.3s;
+        }
+
+        #sort-select:focus {
+            border-color: #1a73e8;
+        }
+
         #search-input {
             padding: 14px;
-            width: 70%;
+            flex-grow: 1; /* שונה מרוחב קבוע כדי למלא את המקום שנותר */
             background-color: #121212;
             color: #e0e0e0;
             border: 2px solid #555;
@@ -59,6 +75,7 @@
             font-size: 17px;
             font-weight: bold;
             transition: background-color 0.3s ease, transform 0.1s;
+            white-space: nowrap;
         }
 
         #search-button:hover {
@@ -77,7 +94,6 @@
             align-items: stretch;
         }
 
-        /* --- עיצוב כרטיס וידאו (קיים) --- */
         .video-item {
             background-color: #282828;
             border: 1px solid #444;
@@ -97,7 +113,6 @@
             border-color: #666;
         }
 
-        /* --- עיצוב כרטיס ערוץ / פלייליסט --- */
         .channel-item, .playlist-item {
             background-color: #282828;
             border: 1px solid #444;
@@ -351,6 +366,12 @@
 </head>
 <body>
     <div id="search-container">
+        <select id="sort-select">
+            <option value="relevance">רלוונטיות</option>
+            <option value="date">תאריך (חדש לישן)</option>
+            <option value="viewCount">הכי נצפה</option>
+            <option value="rating">דירוג גבוה</option>
+        </select>
         <input type="text" id="search-input" placeholder="הזן מילות חיפוש...">
         <button id="search-button">חפש</button>
     </div>
@@ -367,7 +388,6 @@
     </div>
 
     <script>
-        // *** (משתנים גלובליים - ללא שינוי) ***
         const searchInput = document.getElementById('search-input');
         const searchButton = document.getElementById('search-button');
         const resultsContainer = document.getElementById('results-container');
@@ -377,6 +397,7 @@
         const videoPlayerContainer = document.getElementById('video-player-container');
         const videoPlayerIframe = document.getElementById('video-player-iframe');
         const closeButton = document.getElementById('close-button');
+        const sortSelect = document.getElementById('sort-select'); // הפנייה לאלמנט הסינון החדש
         const apiKey = 'AIzaSyDSwtEYVjTDsZEvBlx8a_edqYcnPDbcC0I'; 
         let scrollPosition = 0;
         
@@ -387,7 +408,6 @@
             }
         });
         
-        // *** (פונקציות עזר formatCount, timeSince - ללא שינוי) ***
         function formatCount(count, unit) {
             const num = parseInt(count);
             if (isNaN(num) || num === 0) return `0 ${unit}`;
@@ -415,24 +435,21 @@
             return 'הרגע';
         }
 
-        /* --- *** פונקציית עזר חדשה: חילוץ מזהה וידאו מ-URL *** --- */
         function parseYouTubeVideoId(url) {
-            // Regex שמתאים גם ל-youtu.be וגם ל-youtube.com/watch
             const regExp = /^.*(youtu.be\/|v\/|u\/\w\/|embed\/|watch\?v=|\&v=)([^#\&\?]*).*/;
             const match = url.match(regExp);
 
             if (match && match[2].length === 11) {
-                return match[2]; // מחזיר את מזהה הוידאו
+                return match[2];
             } else {
-                return null; // לא URL של וידאו
+                return null;
             }
         }
-        /* --- *** ---------------------------------------- *** --- */
 
-
-        /* --- *** פונקציית החיפוש שודרגה לטפל ב-URL *** --- */
         async function performSearch() {
             const searchTerm = searchInput.value.trim();
+            const sortOrder = sortSelect.value; // קבלת ערך הסינון הנבחר
+
             if (!searchTerm) {
                 alert('אנא הזן מילת חיפוש.');
                 return;
@@ -444,7 +461,6 @@
             errorMessage.style.display = 'none';
             videoPlayerContainer.classList.add('hidden');
 
-            // 1. נבדוק אם ה-searchTerm הוא URL של וידאו
             const videoIdFromUrl = parseYouTubeVideoId(searchTerm);
             
             try {
@@ -452,8 +468,6 @@
                 const videoDetailsMap = new Map();
 
                 if (videoIdFromUrl) {
-                    // --- נתיב 1: זהו URL של וידאו ---
-                    // נבצע קריאה ישירה ל-videos API
                     const videosApiUrl = `https://www.googleapis.com/youtube/v3/videos?part=snippet,statistics,status&id=${videoIdFromUrl}&key=${apiKey}`;
                     const videosResponse = await fetch(videosApiUrl);
                     const videosData = await videosResponse.json();
@@ -464,21 +478,19 @@
                         return;
                     }
                     
-                    // נרמול הנתונים כדי שיתאימו לפונקציית התצוגה
                     const videoItem = videosData.items[0];
                     searchResults = [{
                         id: {
                             kind: 'youtube#video',
                             videoId: videoItem.id
                         },
-                        snippet: videoItem.snippet // מעביר את ה-snippet למקרה חירום של תמונה
+                        snippet: videoItem.snippet
                     }];
                     videoDetailsMap.set(videoItem.id, videoItem);
 
                 } else {
-                    // --- נתיב 2: זהו חיפוש רגיל (מילת מפתח, שם ערוץ וכו') ---
-                    // (הלוגיקה הקיימת)
-                    const searchApiUrl = `https://www.googleapis.com/youtube/v3/search?part=snippet&maxResults=50&q=${searchTerm}&key=${apiKey}`;
+                    // הוספת פרמטר ה-order לקריאת ה-API
+                    const searchApiUrl = `https://www.googleapis.com/youtube/v3/search?part=snippet&maxResults=50&q=${searchTerm}&order=${sortOrder}&key=${apiKey}`;
                     const searchResponse = await fetch(searchApiUrl);
                     const searchData = await searchResponse.json();
 
@@ -488,9 +500,8 @@
                         return;
                     }
                     
-                    searchResults = searchData.items; // זו הרשימה המלאה (כולל ערוצים/פלייליסטים)
+                    searchResults = searchData.items;
 
-                    // נאסוף מזהים רק מהסרטונים שנמצאו
                     const videoIds = searchResults
                         .filter(item => item.id.kind === 'youtube#video')
                         .map(item => item.id.videoId)
@@ -506,7 +517,6 @@
                     }
                 }
                 
-                // --- תצוגה (משותף לשני הנתיבים) ---
                 loadingMessage.style.display = 'none';
                 displayResults(searchResults, videoDetailsMap);
 
@@ -516,8 +526,6 @@
                 errorMessage.style.display = 'block';
             }
         }
-        /* --- *** ---------------------------------------- *** --- */
-
 
         function displayResults(searchResults, videoDetailsMap) {
             resultsContainer.style.display = 'grid';
@@ -530,7 +538,6 @@
                     const detailItem = videoDetailsMap.get(videoId); 
 
                     if (!detailItem) {
-                        // אם הסרטון לא נמצא במפה (למשל סרטון פרטי), נדלג
                         console.warn('לא נמצאו פרטים מלאים עבור וידאו:', videoId);
                         return;
                     }
@@ -544,7 +551,6 @@
                     const formattedLikes = formatCount(likeCount, 'לייקים'); 
                     const timeAgo = publishDate ? timeSince(publishDate) : 'תאריך לא זמין';
                     
-                    // ננסה לקחת תמונה מה-detailItem (איכותי יותר), אם לא ניקח מה-searchItem
                     const thumbnailUrl = detailItem.snippet.thumbnails.high?.url || searchItem.snippet.thumbnails.high?.url || searchItem.snippet.thumbnails.medium?.url;
 
                     createVideoItem(videoId, title, thumbnailUrl, formattedViews, formattedLikes, timeAgo, isEmbeddable);
@@ -557,7 +563,6 @@
                 }
             });
 
-            // *** (createVideoItem - ללא שינוי) ***
             function createVideoItem(videoId, title, thumbnailUrl, views, likes, timeAgo, isEmbeddable) {
                 const videoDiv = document.createElement('div');
                 videoDiv.classList.add('video-item');
@@ -649,7 +654,6 @@
                 resultsContainer.appendChild(videoDiv);
             }
 
-            // *** (createChannelItem - ללא שינוי) ***
             function createChannelItem(item) {
                 const channelId = item.id.channelId;
                 const title = item.snippet.title;
@@ -668,7 +672,6 @@
                 resultsContainer.appendChild(channelDiv);
             }
 
-            // *** (createPlaylistItem - ללא שינוי) ***
             function createPlaylistItem(item) {
                 const playlistId = item.id.playlistId;
                 const title = item.snippet.title;
@@ -688,7 +691,6 @@
             }
         }
         
-        // *** (playVideo ו-closeButton - ללא שינוי) ***
         function playVideo(videoId) {
             scrollPosition = window.scrollY; 
             resultsContainer.style.display = 'none';
